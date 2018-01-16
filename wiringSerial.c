@@ -143,13 +143,13 @@ int serialOpen (const char *device, const int baud, const int databits, const in
     //options.c_cflag |= CS8 ;  // wiringPi默认
     switch (databits) {
     case 5:
-        options.c_cflag |= CS8 ;
+        options.c_cflag |= CS5 ;
         break;
     case 6:
-        options.c_cflag |= CS8 ;
+        options.c_cflag |= CS6 ;
         break;
     case 7:
-        options.c_cflag |= CS8 ;
+        options.c_cflag |= CS7 ;
         break;
     case 8:
         options.c_cflag |= CS8 ;
