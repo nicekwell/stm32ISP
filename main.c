@@ -4,31 +4,84 @@
 
 int fd;
 
+typedef struct {
+    unsigned char bootloaderversion;    //1字节，bootloader版本
+    unsigned char cmd_count;    //支持的所有指令个数
+    unsigned char cmd[16];      //支持的所有指令
+} stm32info_t;
+stm32info_t stm32info;
+
+static int waitACK()    //等待接收数据，第一个字节如果是0x79则认为ok返回1，如果是0x1f则认为失败返回0
+{
+    while(1){
+        if(0 != serialDataAvail(fd)) {
+            if(0x79 == serialGetchar(fd))
+                return 1;
+            else
+                return 0;
+        }
+        usleep(1000);
+    }
+}
+
+int stm32_sync()
+{
+    printf("stm32_sync\n");
+    serialFlush(fd);
+    while(1) {
+        serialPutchar(fd, 0x7f);
+        if(waitACK()) {
+            printf("sync ok\n");
+            return 1;
+        }
+        usleep(10000);
+    }
+    serialFlush(fd);
+}
+int stm32_get_command()
+{
+    unsigned char get[32];
+    int i, j;
+    printf("%s\n", __func__);
+    serialPutchar(fd, 0x00);
+    serialPutchar(fd, 0xff);
+    waitACK();
+    //下面开始接收数据
+    i=0;
+    while(1) {
+        get[i] = serialGetchar(fd);     //读取数据，如果没有数据的话则会等待
+        if(get[i] == 0x79)      //结束
+            break;
+        else if(get[i] == 0x1f)
+            return -1;
+        i++;
+    }
+    //数据处理
+    stm32info.bootloaderversion = get[1];
+    stm32info.cmd_count = get[0];
+    for(j=0;j < stm32info.cmd_count;j++)
+        stm32info.cmd[j] = get[j+2];
+}
+
 int main(int argc, char *argv[])
 {
     unsigned char get[100];
-    int num, i;
+    int i;
 
     printf("open\n");
-//    fd = serialOpen("/dev/ttyUSB0", 57600, );
     fd = serialOpen("/dev/ttyUSB0", 57600, 8, 1, 'N', 30);
     
-    printf("send\n");
-    get[0] = 0x55;
-    get[1] = 0xcc;
-    serialWrite(fd, get, 2);
-    usleep(10000);
-
-    printf("check\n");
-    printf("in waiting: %d\n", serialDataAvail(fd));
+    stm32_sync();
     
-    printf("read\n");
-    num = serialRead(fd, get, 3);
-    printf("get num %d\n", num);
-    for(i=0;i<num;i++)
-        printf("%x\n", get[i]);
+    stm32_get_command();
+    printf("get bootloader version is 0x%x\n", stm32info.bootloaderversion);
+    printf("get %d support commands: ", stm32info.cmd_count);
+    for(i=0;i<stm32info.cmd_count;i++)
+        printf("0x%x ", stm32info.cmd[i]);
+    printf("\n");
 
-    printf("close\n");
+    
+
     serialClose(fd);
     return 0;
 }
