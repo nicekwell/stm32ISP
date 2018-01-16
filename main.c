@@ -8,6 +8,7 @@ typedef struct {
     unsigned char bootloaderversion;    //1字节，bootloader版本
     unsigned char cmd_count;    //支持的所有指令个数
     unsigned char cmd[16];      //支持的所有指令
+    unsigned int PID;       //product ID
 } stm32info_t;
 stm32info_t stm32info;
 
@@ -61,6 +62,40 @@ int stm32_get_command()
     stm32info.cmd_count = get[0];
     for(j=0;j < stm32info.cmd_count;j++)
         stm32info.cmd[j] = get[j+2];
+
+    serialFlush(fd);
+    return 1;
+}
+int stm32_get_ID_command()
+{
+    unsigned char get[16];
+    int i, j;
+    printf("%s\n", __func__);
+    serialPutchar(fd, 0x02);
+    serialPutchar(fd, 0xfd);
+    waitACK();
+    //接收数据
+    serialGetchar(fd);
+    stm32info.PID = serialGetchar(fd);
+    stm32info.PID <<= 8;
+    stm32info.PID += serialGetchar(fd);
+    waitACK();
+    
+    serialFlush(fd);
+    return 1;    
+}
+int stm32_erase_all()
+{
+    printf("%s\n", __func__);
+    serialPutchar(fd, 0x43);
+    serialPutchar(fd, 0xbc);
+    waitACK();
+    serialPutchar(fd, 0xff);
+    serialPutchar(fd, 0x00);
+    waitACK();
+    printf("erase flash done\n");
+    serialFlush(fd);
+    return 1;
 }
 
 int main(int argc, char *argv[])
@@ -80,7 +115,10 @@ int main(int argc, char *argv[])
         printf("0x%x ", stm32info.cmd[i]);
     printf("\n");
 
-    
+    stm32_get_ID_command();
+    printf("get PID is 0x%x\n", stm32info.PID);
+
+    stm32_erase_all();
 
     serialClose(fd);
     return 0;
