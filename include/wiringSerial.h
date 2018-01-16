@@ -34,7 +34,7 @@ extern "C" {
 */
 extern int   serialOpen      (const char *device, const int baud, const int databits, const int stopbits, const char parity, const int timeout);
 extern void  serialClose     (const int fd) ;
-extern void  serialFlush     (const int fd) ;   //清空缓冲区
+extern void  serialFlush     (const int fd) ;   //清空缓冲区，发送和接收都清空
 extern void  serialPutchar   (const int fd, const unsigned char c) ;    //发送一个字符
 extern void  serialPuts      (const int fd, const char *s) ;    //发送字符串，s是字符串，不发送字符串结尾'\0'
 extern void  serialWrite     (const int fd, const char *s, const int count);    //nicek 写入数据块
