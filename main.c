@@ -97,6 +97,44 @@ int stm32_erase_all()
     serialFlush(fd);
     return 1;
 }
+static unsigned char checksum(unsigned char *data, unsigned char len)      //计算p开始len个字节的checksum，也就是计算异或
+{
+    int i;
+    unsigned char cs = (unsigned char)(len-1);
+    for ( i=0; i<len; i++ )
+        cs ^= data[i];
+    return cs;
+}
+static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
+    //写入数据块，从*data处，往stm32的addr处，写入len字节数据，len最大256
+{
+    unsigned char temp[4];      //保存addr的四个字节
+    unsigned char len1;
+    int i;
+    temp[0] = ((addr>>24) & 0xff);
+    temp[1] = ((addr>>16) & 0xff);
+    temp[2] = ((addr>>8) & 0xff);
+    temp[3] = ((addr) & 0xff);
+
+    serialPutchar(fd, 0x31);
+    serialPutchar(fd, 0xce);
+    waitACK();
+    serialPutchar(fd, temp[0]);
+    serialPutchar(fd, temp[1]);
+    serialPutchar(fd, temp[2]);
+    serialPutchar(fd, temp[3]);
+    serialPutchar(fd, checksum(temp, 4));
+    waitACK();
+    //下面发送数据
+    len1 = (unsigned char)(len - 1);
+    serialPutchar(fd, len1);
+    for(i=0;i<len;i++)
+        serialPutchar(fd, data[i]);
+    serialPutchar(fd, checksum(data, len));
+
+    serialFlush(fd);
+    return 1;
+}
 
 int main(int argc, char *argv[])
 {
@@ -119,6 +157,15 @@ int main(int argc, char *argv[])
     printf("get PID is 0x%x\n", stm32info.PID);
 
     stm32_erase_all();
+
+    //打开文件并下载
+    printf("%s\n", argv[1]);
+    {
+        FILE *fp=NULL;
+        fp = fopen(argv[1], "rb");
+        
+        fclose(fp);
+    }
 
     serialClose(fd);
     return 0;
