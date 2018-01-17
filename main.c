@@ -97,11 +97,12 @@ int stm32_erase_all()
     serialFlush(fd);
     return 1;
 }
-static unsigned char checksum(unsigned char *data, unsigned char len)      //计算p开始len个字节的checksum，也就是计算异或
+static unsigned char checksum(unsigned char *data, int len)      //计算p开始len个字节的checksum，也就是计算异或
 {
     int i;
-    unsigned char cs = (unsigned char)(len-1);
-    for ( i=0; i<len; i++ )
+    unsigned char cs;
+    cs = data[0];
+    for ( i=1; i<len; i++ )
         cs ^= data[i];
     return cs;
 }
@@ -118,7 +119,8 @@ static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
 
     serialPutchar(fd, 0x31);
     serialPutchar(fd, 0xce);
-    waitACK();
+    if(waitACK()) printf("addr ack ok\n");
+    else printf("addr ack fail\n");
     serialPutchar(fd, temp[0]);
     serialPutchar(fd, temp[1]);
     serialPutchar(fd, temp[2]);
@@ -128,11 +130,15 @@ static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
     //下面发送数据
     len1 = (unsigned char)(len - 1);
     serialPutchar(fd, len1);
-    for(i=0;i<len;i++)
+    for(i=0;i<len;i++){
         serialPutchar(fd, data[i]);
-    serialPutchar(fd, checksum(data, len));
+    }
+    serialPutchar(fd, len1 ^ checksum(data, len));
+    if(waitACK()) printf("data ack ok\n");
+    else printf("data ack fail\n");
 
     serialFlush(fd);
+    usleep(1000);
     return 1;
 }
 
@@ -161,9 +167,25 @@ int main(int argc, char *argv[])
     //打开文件并下载
     printf("%s\n", argv[1]);
     {
+        unsigned char buf[256];
+        int i, offset;
         FILE *fp=NULL;
         fp = fopen(argv[1], "rb");
-        
+
+        i=0;
+        offset = 0;
+        while(1){
+            fread(&buf[i], 1, 1, fp);       //采用一个字节一个字节读取，方便检测文件结尾
+            if(feof(fp)) break;
+            i++;
+            if(i==256)  //一个块读取完成，把这个块发送出去
+            {
+                stm32_write_block(buf, 0x08000000+offset, 256);
+                i = 0;
+                offset+=256;
+            }
+        }
+        stm32_write_block(buf, 0x08000000+offset, i);
         fclose(fp);
     }
 
