@@ -1,4 +1,4 @@
-#include <stm32.h>
+#include <stm32isp.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <wiringSerial.h>
@@ -34,7 +34,7 @@ static unsigned char checksum(unsigned char *data, int len)      //计算p开始
         cs ^= data[i];
     return cs;
 }
-static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
+static int stm32isp_write_block(unsigned char *data, unsigned int addr, int len)
     //写入数据块，从*data处，往stm32的addr处，写入len字节数据，len最大256
 {
     unsigned char temp[4];      //保存addr的四个字节
@@ -67,7 +67,7 @@ static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
     usleep(1000);
     return 1;
 }
-static int stm32_read_block(unsigned char *data, unsigned int addr, int len)
+static int stm32isp_read_block(unsigned char *data, unsigned int addr, int len)
 {
     unsigned char temp[4];      //保存addr的四个字节
     unsigned char len1;
@@ -107,7 +107,7 @@ void stm32isp_close()
 {
     serialClose(fd);
 }
-int stm32_sync()
+int stm32isp_sync()
 {
     serialFlush(fd);
     while(1) {
@@ -119,7 +119,7 @@ int stm32_sync()
     }
     serialFlush(fd);
 }
-int stm32_get_command()
+int stm32isp_get_command()
 {
     unsigned char get[32];
     int i, j;
@@ -151,7 +151,7 @@ int stm32_get_command()
     printf("\n");
     return 1;
 }
-int stm32_get_ID_command()
+int stm32isp_get_ID_command()
 {
     unsigned char get[16];
     int i, j;
@@ -170,7 +170,7 @@ int stm32_get_ID_command()
     printf("get PID %4x\n", stm32info.PID);
     return 1;    
 }
-int stm32_erase_all()
+int stm32isp_erase_all()
 {
     serialPutchar(fd, 0x43);
     serialPutchar(fd, 0xbc);
@@ -181,7 +181,7 @@ int stm32_erase_all()
     serialFlush(fd);
     return 1;
 }
-int stm32_write_bin(char *p)
+int stm32isp_write_bin(char *p)
 {
     unsigned char buf[256];
     int i, offset;
@@ -197,17 +197,17 @@ int stm32_write_bin(char *p)
         if(i==256)  //一个块读取完成，把这个块发送出去
         {
             printf("writing data %5d\n\r\033[1A", offset);
-            stm32_write_block(buf, 0x08000000+offset, 256);
+            stm32isp_write_block(buf, 0x08000000+offset, 256);
             i = 0;
             offset+=256;
         }
     }
     printf("writing data %5d\n", offset);
-    stm32_write_block(buf, 0x08000000+offset, i);
+    stm32isp_write_block(buf, 0x08000000+offset, i);
     fclose(fp);
     return 1;
 }
-int stm32_verify(char *p)
+int stm32isp_verify(char *p)
 {
     unsigned char buf[256];
     unsigned char buf_read[256];
@@ -223,7 +223,7 @@ int stm32_verify(char *p)
         i++;
         if(i==256)  //一个块读取完成，从stm32里也读出一个块出来
         {
-            stm32_read_block(buf_read, 0x08000000+offset, 256);
+            stm32isp_read_block(buf_read, 0x08000000+offset, 256);
             printf("verifying data %5d\n\r\033[1A", offset);
             for(j=0;j<256;j++)
                 if(buf[j] != buf_read[j]) printf("verify fail\n");
@@ -231,7 +231,7 @@ int stm32_verify(char *p)
             offset+=256;
         }
     }
-    stm32_read_block(buf_read, 0x08000000+offset, i);
+    stm32isp_read_block(buf_read, 0x08000000+offset, i);
     printf("verifying data %5d\n", offset);
     for(j=0;j<i;j++)
         if(buf[i] != buf_read[i]) printf("verify fail\n");
