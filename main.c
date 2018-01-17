@@ -119,8 +119,7 @@ static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
 
     serialPutchar(fd, 0x31);
     serialPutchar(fd, 0xce);
-    if(waitACK()) printf("addr ack ok\n");
-    else printf("addr ack fail\n");
+    waitACK();
     serialPutchar(fd, temp[0]);
     serialPutchar(fd, temp[1]);
     serialPutchar(fd, temp[2]);
@@ -134,8 +133,7 @@ static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
         serialPutchar(fd, data[i]);
     }
     serialPutchar(fd, len1 ^ checksum(data, len));
-    if(waitACK()) printf("data ack ok\n");
-    else printf("data ack fail\n");
+    waitACK();
 
     serialFlush(fd);
     usleep(1000);
@@ -165,7 +163,7 @@ int main(int argc, char *argv[])
     stm32_erase_all();
 
     //打开文件并下载
-    printf("%s\n", argv[1]);
+    printf("\nstarting download %s\n", argv[1]);
     {
         unsigned char buf[256];
         int i, offset;
@@ -180,14 +178,17 @@ int main(int argc, char *argv[])
             i++;
             if(i==256)  //一个块读取完成，把这个块发送出去
             {
+                printf("writing data %5d\n\r\033[1A", offset);
                 stm32_write_block(buf, 0x08000000+offset, 256);
                 i = 0;
                 offset+=256;
             }
         }
+        printf("writing data %5d\n", offset);
         stm32_write_block(buf, 0x08000000+offset, i);
         fclose(fp);
     }
+    printf("download succeed\n");
 
     serialClose(fd);
     return 0;
