@@ -94,6 +94,7 @@ static int stm32isp_read_block(unsigned char *data, unsigned int addr, int len)
     //下面接收数据
     for(i=0;i<len;i++)
         data[i] = serialGetchar(fd);
+    return 1;
 }
 
 
