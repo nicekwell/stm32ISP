@@ -6,12 +6,12 @@
 
 int main(int argc, char *argv[])
 {
-    if(argc != 4){
-        printf("parameter error!\nexample: stm32isp /dev/ttyUSB0 57600 stm32_test.bin\n");
+    if(argc != 3){
+        printf("parameter error!\nexample: stm32isp /dev/ttyUSB0 stm32_test.bin\n");
         return 0;
     }
 
-    stm32isp_init(argv[1], (int)strtol(argv[2], NULL, 10), 8, 1, 'N', 30);
+    stm32isp_init(argv[1], 57600, 8, 1, 'N', 30);
     
     printf("syncing...");
     if(stm32isp_sync()) printf("sync ok\n");
@@ -25,11 +25,11 @@ int main(int argc, char *argv[])
     else printf("erase flash fail\n\n");
 
     printf("starting download...\n");
-    if(stm32isp_write_bin(argv[3])) printf("down success\n");
+    if(stm32isp_write_bin(argv[2])) printf("down success\n");
     else printf("down fail\n\n");
 
     printf("starting verify...\n");
-    if(stm32isp_verify(argv[3])) printf("verify success\n");
+    if(stm32isp_verify(argv[2])) printf("verify success\n");
     else printf("verify fail\n");
     
     stm32isp_close();
