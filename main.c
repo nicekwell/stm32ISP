@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <stm32isp.h>
@@ -10,7 +11,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    stm32isp_init(argv[1], atoi(argv[2]), 8, 1, 'N', 30);
+    stm32isp_init(argv[1], (int)strtol(argv[2], NULL, 10), 8, 1, 'N', 30);
     
     printf("syncing...");
     if(stm32isp_sync()) printf("sync ok\n");
