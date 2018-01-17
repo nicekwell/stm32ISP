@@ -101,8 +101,8 @@ static unsigned char checksum(unsigned char *data, int len)      //计算p开始
 {
     int i;
     unsigned char cs;
-    cs = data[0];
-    for ( i=1; i<len; i++ )
+    cs = 0;
+    for ( i=0; i<len; i++ )
         cs ^= data[i];
     return cs;
 }
@@ -138,6 +138,34 @@ static int stm32_write_block(unsigned char *data, unsigned int addr, int len)
     serialFlush(fd);
     usleep(1000);
     return 1;
+}
+static int stm32_read_block(unsigned char *data, unsigned int addr, int len)
+{
+    unsigned char temp[4];      //保存addr的四个字节
+    unsigned char len1;
+    int i;
+    temp[0] = ((addr>>24) & 0xff);
+    temp[1] = ((addr>>16) & 0xff);
+    temp[2] = ((addr>>8) & 0xff);
+    temp[3] = ((addr) & 0xff);
+
+    serialPutchar(fd, 0x11);
+    serialPutchar(fd, 0xEE);
+    waitACK();
+    serialPutchar(fd, temp[0]);
+    serialPutchar(fd, temp[1]);
+    serialPutchar(fd, temp[2]);
+    serialPutchar(fd, temp[3]);
+    serialPutchar(fd, checksum(temp, 4));
+    waitACK();
+    //下面发送要读取的字节数
+    len1 = (unsigned char)(len - 1);
+    serialPutchar(fd, len1);
+    serialPutchar(fd, ~len1);
+    waitACK();
+    //下面接收数据
+    for(i=0;i<len;i++)
+        data[i] = serialGetchar(fd);
 }
 
 int main(int argc, char *argv[])
@@ -188,7 +216,39 @@ int main(int argc, char *argv[])
         stm32_write_block(buf, 0x08000000+offset, i);
         fclose(fp);
     }
-    printf("download succeed\n");
+    printf("download succeed\n\n");
+
+    printf("starting verify\n");
+    {
+        unsigned char buf[256];
+        unsigned char buf_read[256];
+        int i,j, offset;
+        FILE *fp=NULL;
+        fp = fopen(argv[1], "rb");
+        
+        i=0;
+        offset=0;
+        while(1){
+            fread(&buf[i], 1, 1, fp);       //采用一个字节一个字节读取，方便检测文件结尾
+            if(feof(fp)) break;
+            i++;
+            if(i==256)  //一个块读取完成，从stm32里也读出一个块出来
+            {
+                stm32_read_block(buf_read, 0x08000000+offset, 256);
+                printf("verifying data %5d\n\r\033[1A", offset);
+                for(j=0;j<256;j++)
+                    if(buf[j] != buf_read[j]) printf("verify fail\n");
+                i = 0;
+                offset+=256;
+            }
+        }
+        stm32_read_block(buf_read, 0x08000000+offset, i);
+        printf("verifying data %5d\n", offset);
+        for(j=0;j<i;j++)
+            if(buf[i] != buf_read[i]) printf("verify fail\n");
+        fclose(fp);
+    }
+    printf("verify succeed\n");
 
     serialClose(fd);
     return 0;
