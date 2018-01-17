@@ -43,7 +43,7 @@ stm32官方文档已提交到本工程 documents 目录下。
 ## 程序结构
 
 **wiringSerial.c wiringSerial.h**  
-串口驱动，在树莓派[wiringPi]<https://github.com/WiringPi/WiringPi>基础上修改，增加了数据块读写代码，增加了更多设置项。  
+串口驱动，在树莓派[wiringPi](https://github.com/WiringPi/WiringPi)基础上修改，增加了数据块读写代码，增加了更多设置项。  
 这部分驱动在mac、桌面ubuntu、树莓派上都可以使用。
 
 **stm32isp.c stm32isp.h**  
