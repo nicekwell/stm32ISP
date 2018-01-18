@@ -25,8 +25,8 @@ int main(int argc, char *argv[])
     else printf("erase flash fail\n\n");
 
     printf("starting download...\n");
-    if(stm32isp_write_bin(argv[2])) printf("down success\n");
-    else printf("down fail\n\n");
+    if(stm32isp_write_bin(argv[2])) printf("download success\n");
+    else printf("download fail\n\n");
 
     printf("starting verify...\n");
     if(stm32isp_verify(argv[2])) printf("verify success\n");
