@@ -5,7 +5,7 @@
   本驱动基于已经ok的串口驱动，包括串口初始化、关闭、收发、缓冲区操作。
  */
 int stm32isp_init(const char *device, const int baud, const int databits, const int stopbits, const char parity, const int timeout); //成功返回1，失败返回0
-void stm32isp_close();     //成功返回1，失败返回0
+void stm32isp_close();
 
 
 int stm32isp_sync();               //同步波特率，成功返回1，失败返回0
