@@ -22,6 +22,7 @@ stm32官方文档已提交到本工程 documents 目录下。<https://github.com
 ## 1、硬件
 首先要让stm32进入bootloader启动：
 
+引脚 | 电平
 :-: | :-: 
 BOOT0 | 高电平
 BOOT1 | 低电平
@@ -30,6 +31,7 @@ BOOT1 | 低电平
 
 连接串口1：
 
+引脚 | 功能
 :-: | :-:
 PA9 | TXD，连接host RXD
 PA10 | RXD，连接host TXD
@@ -39,8 +41,8 @@ PA10 | RXD，连接host TXD
 
 host | device | note
 :-: | :-: | :-:
-0x7f |  | 发送0x7f，单片机收到后会自动匹配波特率。
- | 0x79(ACK)/0x1F(NACK) | device返回ACK或NACK，表示对host的反应。
+0x7f | -  | 发送0x7f，单片机收到后会自动匹配波特率。
+\- | 0x79(ACK)/0x1F(NACK) | device返回ACK或NACK，表示对host的反应。
  
  适配波特率这一步是无条件执行的，执行完这一步之后就可以接收各种指令。  
 下面就介绍各个指令的功能和数据协议。
@@ -54,12 +56,12 @@ host | device | note
 
 host | device | note
 :-: | :-: | :-:
-0x00 + 0xff | | 
- | 0x79(ACK)/0x1F(NACK) | 
- | N | 1字节，表示下面要接收到的字节数。bootloaderversion字节数 + 所有指令字节数 = N+1
- | bootloader version | 1字节，如0x21代表2.1版本
- | 所有支持的指令 | 多个字节，每个字节数据都表示一个支持的指令
- | 0x79(ACK)/0x1F(NACK) | 指令执行结束后会返回0x79
+0x00 + 0xff | - | 
+\- | 0x79(ACK)/0x1F(NACK) | 
+\- | N | 1字节，表示下面要接收到的字节数。bootloaderversion字节数 + 所有指令字节数 = N+1
+\- | bootloader version | 1字节，如0x21代表2.1版本
+\- | 所有支持的指令 | 多个字节，每个字节数据都表示一个支持的指令
+\- | 0x79(ACK)/0x1F(NACK) | 指令执行结束后会返回0x79
 
 ## 4、get version & read protection
 【指令码】0x01  
@@ -68,11 +70,11 @@ host | device | note
 
 host | device | note
 :-: | :-: | :-:
-0x01+0xfe | |
- | 0x79(ACK)/0x1F(NACK) | 
- | bootloader version | 
- | 2个字节 | 这两个字节和保护状态有关
- | 0x79(ACK)/0x1F(NACK) |
+0x01+0xfe | - |
+\- | 0x79(ACK)/0x1F(NACK) | 
+\- | bootloader version | 
+\- | 2个字节 | 这两个字节和保护状态有关
+\- | 0x79(ACK)/0x1F(NACK) |
 
 ## 5、get ID command
 【指令码】0x02  
@@ -81,11 +83,11 @@ host | device | note
 
 host | device | note
 :-: | :-: | :-:
-0x02+0xfd | | 
- | 0x79(ACK)/0x1F(NACK) | 
- | N | 1字节，表示下面 PID字节数 - 1
- | PID | 多字节(上一个字节已指明字节数)，先传高位后传低位。我这次用的stm32f103c8t6是2字节。
- | 0x79(ACK)/0x1F(NACK) | 
+0x02+0xfd | - | 
+\- | 0x79(ACK)/0x1F(NACK) | 
+\- | N | 1字节，表示下面 PID字节数 - 1
+\- | PID | 多字节(上一个字节已指明字节数)，先传高位后传低位。我这次用的stm32f103c8t6是2字节。
+\- | 0x79(ACK)/0x1F(NACK) | 
 
 ## 6、Erase Memory command
 【指令码】0x43  
@@ -94,10 +96,10 @@ host | device | note
 
 host | device | note
 :-: | :-: | :-:
-0x43+0xbc | |
- | 0x79(ACK)/0x1F(NACK) | 
-0xff+0x00 | | 这是全擦指令
- | 0x79(ACK)/0x1F(NACK) | 
+0x43+0xbc | - |
+\- | 0x79(ACK)/0x1F(NACK) | 
+0xff+0x00 | \- | 这是全擦指令
+\- | 0x79(ACK)/0x1F(NACK) | 
 
 ## 7、Write Memory command
 【指令码】0x31  
@@ -107,15 +109,15 @@ host | device | note
 
 host | device | note
 :-: | :-: | :-:
-0x31+0xCE | | 
- | 0x79(ACK)/0x1F(NACK) | 
-addr | | 4字节，下载地址。用户flash起始地址是0x08000000。**先发高位，后发低位**
-addr checksum | | 1字节，地址的checksum，就是上面4字节数据的异或。
- | 0x79(ACK)/0x1F(NACK) | 
-count | | 1字节，表示后面将要传输的字节数，范围(0, 255]。**字节数 = 这个值+1**，也就是说最大传输256字节。
-data | | 多字节，字节数 = count + 1，最大256字节。**这里下载进去的是bin文件，不是hex。。**
-checksum | | 1字节，上面的data数据，以及数据个数count的checksum。注意这里的checksum包含**数据和个数**。
- | 0x79(ACK)/0x1F(NACK) | 
+0x31+0xCE | - | 
+\- | 0x79(ACK)/0x1F(NACK) | 
+addr | - | 4字节，下载地址。用户flash起始地址是0x08000000。**先发高位，后发低位**
+addr checksum | - | 1字节，地址的checksum，就是上面4字节数据的异或。
+\- | 0x79(ACK)/0x1F(NACK) | 
+count | - | 1字节，表示后面将要传输的字节数，范围(0, 255]。**字节数 = 这个值+1**，也就是说最大传输256字节。
+data | - | 多字节，字节数 = count + 1，最大256字节。**这里下载进去的是bin文件，不是hex。。**
+checksum | - | 1字节，上面的data数据，以及数据个数count的checksum。注意这里的checksum包含**数据和个数**。
+\- | 0x79(ACK)/0x1F(NACK) | 
 
 注：
 
@@ -132,13 +134,13 @@ checksum | | 1字节，上面的data数据，以及数据个数count的checksum�
 host | device | note
 :-: | :-: | :-:
 0x11+0xEE | 0x79(ACK)/0x1F(NACK) | 
-addr | | 4字节，下载地址。用户flash起始地址是0x08000000。**先发高位，后发低位**
-addr checksum | | 1字节，地址的checksum，就是上面4字节数据的异或。
- | 0x79(ACK)/0x1F(NACK) | 
-count | | 1字节，将要读取的数据个数，0~255。count+1就是将要读取的字节数，最多读取256字节。
-checksum | | 1字节，count的按位取反。
- | 0x79(ACK)/0x1F(NACK) | 
- | data | count+1个字节，这就是要读取的数据。
+addr | - | 4字节，下载地址。用户flash起始地址是0x08000000。**先发高位，后发低位**
+addr checksum | - | 1字节，地址的checksum，就是上面4字节数据的异或。
+\- | 0x79(ACK)/0x1F(NACK) | 
+count | - | 1字节，将要读取的数据个数，0~255。count+1就是将要读取的字节数，最多读取256字节。
+checksum | - | 1字节，count的按位取反。
+\- | 0x79(ACK)/0x1F(NACK) | 
+\- | data | count+1个字节，这就是要读取的数据。
 
 注：
 
