@@ -5,9 +5,11 @@ stm32串口ISP程序，基于c语言。
 在ubuntu和mac下测试都ok，ubuntu下需要修改/dev/ttyUSB0权限，mac下不需要修改。  
 本程序在stm32f103c8t6上ok，根据官方文档，其他型号单片机下载协议相同，但没有测试过。
 
+2019年04月10日：在mac下测试，用pl2303 ok，用ft232失败。
+
 使用方法：  
 **stm32isp /dev/ttyUSB0 stm32_test.bin**  
-mac下的usb串口节点是 /dev/tty.usbserial
+（mac下的usb串口节点是 /dev/tty.usbserial）
 
 注：
 
