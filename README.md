@@ -5,7 +5,8 @@ stm32串口ISP程序，基于c语言。
 在ubuntu和mac下测试都ok，ubuntu下需要修改/dev/ttyUSB0权限，mac下不需要修改。  
 本程序在stm32f103c8t6上ok，根据官方文档，其他型号单片机下载协议相同，但没有测试过。
 
-2019年04月10日：在mac下测试，用pl2303 ok，用ft232失败。
+2019年04月10日：在mac下测试，用pl2303 ok，用ft232失败。  
+2020年12月03日：ft232失败原因应该是驱动问题导致延时过大，mac下老的ft232驱动收发大约会有几百ms延时，更新驱动后延时可控制在10ms以内。参考：<https://blog.csdn.net/nicekwell/article/details/103690224>
 
 使用方法：  
 **stm32isp /dev/ttyUSB0 stm32_test.bin**  
@@ -15,12 +16,6 @@ stm32串口ISP程序，基于c语言。
 
 1. 波特率固定为57600不允许修改。实际上测试了各种波特率，只有57600和38400可以稳定下载（程序写的还不太稳定吧），所以波特率固定为了57600。
 2. **下载的是bin文件，不是hex文件**。bin文件是纯粹的编码，hex文件包含了地址信息。keil默认不生成bin文件，生成bin文件的方法可网上查找。
-
-# 广告
-
-老婆做毕业设计，给我下了死命令，一定要找300个程序员研究一下，请各位同行做个调查问卷，可扫描下面二维码或者直接点击此链接：<https://www.wjx.cn/jq/17710478.aspx>，多谢！
-
-![ad.jpg](https://github.com/nicekwell/stm32ISP/raw/master/documents/ad.jpg)
 
 # 下载协议
 
